@@ -1,3 +1,4 @@
+# Built for python 2.7
 import MySQLdb as mdb
 import pygtk,gtk,re
 
