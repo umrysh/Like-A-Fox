@@ -1,5 +1,10 @@
+Welcome to Like-A-Fox, MySQL Viewer
+
+This project came about from me being bored one evening. I wanted to play around with Python and MySQL and this is what came out.
+
+
 Current Version:
-*Currently you can only perform a select query with only 1 "where" condition. More features to be added soon :)
+*Currently you can only perform a select query with only 1 "where" condition. More features to be added as more boring evenings occur :)
 
 
 Notes:
