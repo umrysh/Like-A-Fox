@@ -19,7 +19,7 @@ import pygtk,gtk,re,csv,string
 
 class MysqlClient:
 	def submit(self,widget):
-		if self.type == "Select":
+		if self.type == "Select" and self.export == False:
 			# Print headings
 			if self.selectcolumn == "*":
 				self.cur.execute('select column_name from information_schema.columns where table_name = "%s" and TABLE_SCHEMA = "%s"' % (self.table,self.database))
@@ -51,6 +51,63 @@ class MysqlClient:
 						toprint = toprint + ", %s" % row[f]
 				print toprint
 			print "END"
+		elif self.type == "Select" and self.export == True:
+			
+			# Export Select Statement to File
+			# Print headings
+			### On submit load all results into an array ###
+			dataArray = []
+
+			if self.selectcolumn == "*":
+				self.cur.execute('select column_name from information_schema.columns where table_name = "%s" and TABLE_SCHEMA = "%s"' % (self.table,self.database))
+				numrows = int(self.cur.rowcount)
+				a = []
+				for i in range(numrows):
+					row = self.cur.fetchone()
+					a.append(row[0])
+				dataArray.append(a)
+			else:
+				dataArray.append(self.selectcolumn)
+
+
+			if self.wherecolumn != "" and self.where2column != "" and self.where3.get_text() != "":
+				self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
+			else:
+				self.cur.execute('select %s from %s' % (self.selectcolumn,self.table))
+			numrows = int(self.cur.rowcount)
+		    	for i in range(numrows):
+				row = self.cur.fetchone()
+				length = len(row)
+				a = []
+				for f in range(length):
+					a.append(row[f])
+				dataArray.append(a)
+
+
+			if len(dataArray) != 0:
+				### In case the query had no results ###
+				### Open Dialog asking user where they would like the new CSV stored ###
+				dialog = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SAVE,buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+				dialog.set_current_name("Output.csv")
+				dialog.set_default_response(gtk.RESPONSE_OK)
+				response = dialog.run()
+				if response == gtk.RESPONSE_OK:
+					outputpath = dialog.get_filename()
+				else:
+					outputpath = ""
+				dialog.destroy()
+
+				if outputpath != "":
+					### Write data to file ###
+					f = csv.writer(open(outputpath, 'wb'), delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
+					for count in range(0,len(dataArray)):
+						f.writerow(dataArray[count])
+					dialog = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,gtk.MESSAGE_INFO, gtk.BUTTONS_OK,"Export Completed!")
+					dialog.set_title("Like A Fox :)")
+
+					dialog.run()
+					dialog.destroy()
+
 		elif self.type == "Insert":
 			if self.csvpath != "":
 				Ofile = open(self.csvpath, 'r')
@@ -194,7 +251,15 @@ class MysqlClient:
 			self.cur = self.con.cursor()
 			self.buttons_hbox.show()
 
-	def select_query(self,widget):
+	def select_print_query(self,widget):
+		self.export = False
+		self.select_query()
+
+	def select_export_query(self,widget):
+		self.export = True
+		self.select_query()
+
+	def select_query(self):
 		self.type = "Select"
 		self.Qvbox.destroy()
 		self.submithbox.hide()
@@ -521,7 +586,7 @@ class MysqlClient:
 		self.password = gtk.Entry()
 		self.password.set_max_length(30)
 		self.password.connect("activate", self.enter_callback, self.password)
-		self.password.set_text("*******")
+		self.password.set_text("******")
 		self.password.select_region(0, len(self.password.get_text()))
 		self.passhbox.pack_start(self.password, True, True, 0)
 		#
@@ -544,13 +609,16 @@ class MysqlClient:
 		self.main_vbox.pack_start(self.typeframe, False, False, 0)
 		self.main_vbox.pack_start(self.Qframe, False, False, 0)
 		#
-		selectQButton = gtk.Button("Select")
-		selectQButton.connect("clicked", self.select_query)
+		selectQButton = gtk.Button("Select&Print")
+		selectQButton.connect("clicked", self.select_print_query)
+		selectExportQButton = gtk.Button("Select&Export")
+		selectExportQButton.connect("clicked", self.select_export_query)
 		insertQButton = gtk.Button("Insert")
 		insertQButton.connect("clicked", self.insert_query)
 		self.buttons_hbox = gtk.HBox(False, 5)
 		self.typeframe.add(self.buttons_hbox)
 		self.buttons_hbox.pack_start(selectQButton, False, False, 5)
+		self.buttons_hbox.pack_start(selectExportQButton, False, False, 5)
 		self.buttons_hbox.pack_start(insertQButton, False, False, 5)
 		#
 		self.submithbox = gtk.HBox(False, 0)

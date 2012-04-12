@@ -15,9 +15,13 @@ Changelog:
 
 ***Updated April 12 2012***
 
-I have added the ability to import a comma separated file into a MySQL table. When you select a database you are given two selections, perform a "Select" query on the database or insert data into the database.
+You can now choose to have the results of your "Select" query exported to a comma separated file instead of being printed to the screen (This is a very quick way to export all the records from a table).
 
-Each line of the CSV must confirm to the column specifications of the table you are inserting into. For example, if your MySQL statement would be "INSERT INTO table VALUES(XX,YY,ZZ)" then your CSV needs to be formatted as:
+As well I have added the ability to import a comma separated file into a MySQL table. 
+
+When you select a database you are now given three selections, perform a "Select" query on the database and print the results to the screen, perform a "Select" query on the database and export the results to a CSV file, or insert data into the database.
+
+To perform an insert each line of the CSV must confirm to the column specifications of the table you are inserting into. For example, if your MySQL statement would be "INSERT INTO table VALUES(XX,YY,ZZ)" then your CSV needs to be formatted as:
 
 XX,YY,ZZ
 XX2,YY2,ZZ2
