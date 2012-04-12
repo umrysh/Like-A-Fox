@@ -15,41 +15,57 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import MySQLdb as mdb
-import pygtk,gtk,re
+import pygtk,gtk,re,csv,string
 
 class MysqlClient:
 	def submit(self,widget):
-		# Print headings
-		if self.selectcolumn == "*":
-			self.cur.execute('select column_name from information_schema.columns where table_name = "%s" and TABLE_SCHEMA = "%s"' % (self.table,self.database))
-			numrows = int(self.cur.rowcount)
-			toprint = ""
-			for i in range(numrows):
-				row = self.cur.fetchone()
-				if i == 0:
-					toprint = "%s" % row[0]
-				else:
-					toprint = toprint + " | %s" % row[0]
-			print toprint
-		else:
-			print self.selectcolumn
+		if self.type == "Select":
+			# Print headings
+			if self.selectcolumn == "*":
+				self.cur.execute('select column_name from information_schema.columns where table_name = "%s" and TABLE_SCHEMA = "%s"' % (self.table,self.database))
+				numrows = int(self.cur.rowcount)
+				toprint = ""
+				for i in range(numrows):
+					row = self.cur.fetchone()
+					if i == 0:
+						toprint = "%s" % row[0]
+					else:
+						toprint = toprint + " | %s" % row[0]
+				print toprint
+			else:
+				print self.selectcolumn
 
-		if self.wherecolumn != "" and self.where2column != "" and self.where3.get_text() != "":
-			self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
-		else:
-			self.cur.execute('select %s from %s' % (self.selectcolumn,self.table))
-		numrows = int(self.cur.rowcount)
-	    	for i in range(numrows):
-			row = self.cur.fetchone()
-			length = len(row)
-			toprint = ""
-			for f in range(length):
-				if f == 0:
-					toprint = "%s" % row[f]
-				else:
-					toprint = toprint + ", %s" % row[f]
-			print toprint
-		print "END"
+			if self.wherecolumn != "" and self.where2column != "" and self.where3.get_text() != "":
+				self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
+			else:
+				self.cur.execute('select %s from %s' % (self.selectcolumn,self.table))
+			numrows = int(self.cur.rowcount)
+		    	for i in range(numrows):
+				row = self.cur.fetchone()
+				length = len(row)
+				toprint = ""
+				for f in range(length):
+					if f == 0:
+						toprint = "%s" % row[f]
+					else:
+						toprint = toprint + ", %s" % row[f]
+				print toprint
+			print "END"
+		elif self.type == "Insert":
+			if self.csvpath != "":
+				Ofile = open(self.csvpath, 'r')
+				Reader = csv.reader(Ofile, delimiter=',', quotechar='"')
+
+				for row in Reader:
+					temp = ""
+					for count in range(0,len(row)):
+						if temp == "":
+							temp = '"%s"' % row[count]
+						else:
+							temp = temp + "," + '"%s"' % row[count]
+					
+					print 'insert into %s values(%s)' % (self.table,temp)
+					self.cur.execute('insert into %s values(%s)' % (self.table,temp))
 	def enter_callback(self,widget, entry):
 		temp=0;
 	def cb_select_menu_select(self,widget,data):
@@ -164,11 +180,7 @@ class MysqlClient:
 
 			self.submithbox.show()
 
-
-
-	def cb_database_menu_select(self,widget,data):
-		self.Qvbox.destroy()
-		self.submithbox.hide()
+	def cb_type_menu_select(self,widget,data):
 		if data != "":
 			self.warning2.hide()
 			try:
@@ -179,44 +191,131 @@ class MysqlClient:
 				return
 			self.database = data
 			self.con.autocommit(True)
-			self.cur = self.con.cursor()	
-			self.cur.execute('show tables')
+			self.cur = self.con.cursor()
+			self.buttons_hbox.show()
 
-			numrows = int(self.cur.rowcount)
-
-			self.Qframe.show()
-			self.Qvbox = gtk.VBox(False, 0)
-			self.Qvbox.set_border_width(5)
-			self.Qframe.add(self.Qvbox)
-
-			self.QFromHbox = gtk.HBox(False, 0)
-
-			self.QFromText = gtk.Label("From Table : ")
-			self.QFromHbox.pack_start(self.QFromText, True, True, 0)
-
-			self.QFromMenu = gtk.Menu()
+	def select_query(self,widget):
+		self.type = "Select"
+		self.Qvbox.destroy()
+		self.submithbox.hide()
 		
-			self.QFromOpt = gtk.OptionMenu()
-		
-			item = self.make_menu_item_database ("-----", self.cb_from_menu_select, "")
+				
+		self.cur.execute('show tables')
+
+		numrows = int(self.cur.rowcount)
+
+		self.Qframe.show()
+		self.Qvbox = gtk.VBox(False, 0)
+		self.Qvbox.set_border_width(5)
+		self.Qframe.add(self.Qvbox)
+
+		self.QFromHbox = gtk.HBox(False, 0)
+
+		self.QFromText = gtk.Label("From Table : ")
+		self.QFromHbox.pack_start(self.QFromText, True, True, 0)
+
+		self.QFromMenu = gtk.Menu()
+	
+		self.QFromOpt = gtk.OptionMenu()
+	
+		item = self.make_menu_item_database ("-----", self.cb_from_menu_select, "")
+		item.show()
+		self.QFromMenu.append(item)
+    		for i in range(numrows):
+			row = self.cur.fetchone()
+			item = self.make_menu_item_database (row[0], self.cb_from_menu_select, row[0])
 			item.show()
 			self.QFromMenu.append(item)
-	    		for i in range(numrows):
-				row = self.cur.fetchone()
-				item = self.make_menu_item_database (row[0], self.cb_from_menu_select, row[0])
-				item.show()
-				self.QFromMenu.append(item)
-			self.QFromOpt.set_menu(self.QFromMenu)
-			self.QFromHbox.pack_start(self.QFromOpt, True, True, 0)
-			self.Qvbox.pack_start(self.QFromHbox, False, True, 0)
-			self.Qvbox.show()
-			self.QFromOpt.show()
-			self.QFromHbox.show()
-			self.QFromText.show()
+		self.QFromOpt.set_menu(self.QFromMenu)
+		self.QFromHbox.pack_start(self.QFromOpt, True, True, 0)
+		self.Qvbox.pack_start(self.QFromHbox, False, True, 0)
+		self.Qvbox.show()
+		self.QFromOpt.show()
+		self.QFromHbox.show()
+		self.QFromText.show()
 
-			self.QSelectHbox = gtk.HBox(False, 0)
-			self.QWhereHbox = gtk.HBox(False, 0)
+		self.QSelectHbox = gtk.HBox(False, 0)
+		self.QWhereHbox = gtk.HBox(False, 0)
+
+	def insert_query(self,widget):
+		self.type = "Insert"	
+		self.Qvbox.destroy()
+		self.submithbox.hide()
 			
+		self.cur.execute('show tables')
+
+		numrows = int(self.cur.rowcount)
+
+		self.Qframe.show()
+		self.Qvbox = gtk.VBox(False, 0)
+		self.Qvbox.set_border_width(5)
+		self.Qframe.add(self.Qvbox)
+
+		self.QFromHbox = gtk.HBox(False, 0)
+
+		self.QFromText = gtk.Label("Insert Into Table : ")
+		self.QFromHbox.pack_start(self.QFromText, True, True, 0)
+
+		self.QFromMenu = gtk.Menu()
+	
+		self.QFromOpt = gtk.OptionMenu()
+	
+		item = self.make_menu_item_database ("-----", self.cb_insert_menu_select, "")
+		item.show()
+		self.QFromMenu.append(item)
+    		for i in range(numrows):
+			row = self.cur.fetchone()
+			item = self.make_menu_item_database (row[0], self.cb_insert_menu_select, row[0])
+			item.show()
+			self.QFromMenu.append(item)
+		self.QFromOpt.set_menu(self.QFromMenu)
+		self.QFromHbox.pack_start(self.QFromOpt, True, True, 0)
+		self.Qvbox.pack_start(self.QFromHbox, False, True, 0)
+		self.Qvbox.show()
+		self.QFromOpt.show()
+		self.QFromHbox.show()
+		self.QFromText.show()
+
+		self.QSelectHbox = gtk.HBox(False, 0)
+		
+	def cb_insert_menu_select(self,widget,data):
+		# Destroy rest of query
+		self.QSelectHbox.destroy()
+		if data != "":
+			self.table = data
+			self.QSelectHbox = gtk.HBox(False, 0)
+			button3 = gtk.Button("Select CSV File")
+			entryLOC = gtk.Entry()
+			entryLOC.set_text("")
+			entryLOC.set_editable(False)
+			button3.connect("clicked", self.fileselect, entryLOC)
+			button3.show()
+			entryLOC.show()
+
+			self.QSelectHbox.pack_start(entryLOC, True, True, 0)
+			self.QSelectHbox.pack_start(button3, False, False, 0)
+
+			self.Qvbox.pack_start(self.QSelectHbox, False, True, 0)
+
+			self.QSelectHbox.show()
+			self.submithbox.show()
+
+	def fileselect(self, widget, entryLOC):
+		dialog = gtk.FileChooserDialog("Open..",
+			None,
+			gtk.FILE_CHOOSER_ACTION_OPEN,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		dialog.set_default_response(gtk.RESPONSE_OK)
+		filter = gtk.FileFilter()
+		filter.set_name("CSV")
+		filter.add_pattern("*.csv")
+		dialog.add_filter(filter)
+		response = dialog.run()
+		if response == gtk.RESPONSE_OK:
+			self.csvpath = dialog.get_filename()
+			entryLOC.set_text(self.csvpath)
+		dialog.destroy()	
 
 	def make_menu_item_database(self,named, callback, data1):
 	    item = gtk.MenuItem(named)
@@ -291,7 +390,7 @@ class MysqlClient:
 	    """, re.VERBOSE | re.IGNORECASE | re.DOTALL)
 	    return pattern.match(ip) is not None
 	def is_valid_ip(self,ip):
-	    """Validates IP addresses.
+	    """Validates IP addresses. Function originally posted by MizardX on http://stackoverflow.com/questions/319279/how-to-validate-ip-address-in-python
 	    """
 	    return self.is_valid_ipv4(ip) or self.is_valid_ipv6(ip)
 
@@ -307,6 +406,7 @@ class MysqlClient:
 		self.Qvbox.destroy()
 		self.vbox.destroy()
 		self.submithbox.hide()
+		self.buttons_hbox.hide()
 	def selectdb(self,widget):
 		self.warning2.hide()
 		if self.is_valid_ip(self.ipaddress.get_text()):
@@ -332,14 +432,14 @@ class MysqlClient:
 		
 			self.DatabaseOpt = gtk.OptionMenu()
 		
-			item = self.make_menu_item_database ("-----", self.cb_database_menu_select, "")
+			item = self.make_menu_item_database ("-----", self.cb_type_menu_select, "")
 			item.show()
 			self.DatabaseMenu.append(item)
 	    		for i in range(numrows):
 				row = self.cur.fetchone()
 
 
-				item = self.make_menu_item_database (row[0], self.cb_database_menu_select, row[0])
+				item = self.make_menu_item_database (row[0], self.cb_type_menu_select, row[0])
 				item.show()
 				self.DatabaseMenu.append(item)
 			self.DatabaseOpt.set_menu(self.DatabaseMenu)
@@ -367,8 +467,6 @@ class MysqlClient:
 			self.button2.show()
 		else:
 			self.warning1.show()
-	 	 
-
 	def __init__(self):
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	 	self.window.connect("destroy", lambda w: gtk.main_quit())
@@ -423,7 +521,7 @@ class MysqlClient:
 		self.password = gtk.Entry()
 		self.password.set_max_length(30)
 		self.password.connect("activate", self.enter_callback, self.password)
-		self.password.set_text("XXXXXX")
+		self.password.set_text("*******")
 		self.password.select_region(0, len(self.password.get_text()))
 		self.passhbox.pack_start(self.password, True, True, 0)
 		#
@@ -432,6 +530,7 @@ class MysqlClient:
 		self.button1 = gtk.Button("Connect")
 		self.button2 = gtk.Button("Disconnect")
 		self.frame = gtk.Frame("Database")
+		self.typeframe = gtk.Frame("Type of Query to Perform")
 		self.Qframe = gtk.Frame("Query")
 
 	  	self.button1.connect("clicked", self.selectdb)
@@ -442,7 +541,17 @@ class MysqlClient:
 	 	self.main_vbox.pack_start(self.connecthbox, False, False, 5) 
 	 	#
 		self.main_vbox.pack_start(self.frame, False, False, 0)
+		self.main_vbox.pack_start(self.typeframe, False, False, 0)
 		self.main_vbox.pack_start(self.Qframe, False, False, 0)
+		#
+		selectQButton = gtk.Button("Select")
+		selectQButton.connect("clicked", self.select_query)
+		insertQButton = gtk.Button("Insert")
+		insertQButton.connect("clicked", self.insert_query)
+		self.buttons_hbox = gtk.HBox(False, 5)
+		self.typeframe.add(self.buttons_hbox)
+		self.buttons_hbox.pack_start(selectQButton, False, False, 5)
+		self.buttons_hbox.pack_start(insertQButton, False, False, 5)
 		#
 		self.submithbox = gtk.HBox(False, 0)
 		self.button3 = gtk.Button("Submit Query")
@@ -467,6 +576,7 @@ class MysqlClient:
 		self.warning1.hide()
 		self.warning2.hide()
 		self.submithbox.hide()
+		self.buttons_hbox.hide()
 		gtk.main()
 
 if __name__ == "__main__":

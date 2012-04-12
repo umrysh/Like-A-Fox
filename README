@@ -3,9 +3,29 @@ Welcome to Like-A-Fox, MySQL Viewer
 This project came about from me being bored one evening. I wanted to play around with Python and MySQL and this is what came out.
 
 
-Current Version:
-*Currently you can only perform a select query with only 1 "where" condition. More features to be added as more boring evenings occur :)
-
-
 Notes:
-Make sure your MySQL account has the correct permissions to access the databases remotely.
+*Make sure your MySQL account has the correct permissions to access the databases remotely.
+
+*Use of this software is at your own risk. I have tested it on my own MySQL databases and everything works fine but I am not responsible if you royally bung up your servers. Always try out a new version on a test database before using it on your main databases.
+
+
+
+
+Changelog:
+
+***Updated April 12 2012***
+
+I have added the ability to import a comma separated file into a MySQL table. When you select a database you are given two selections, perform a "Select" query on the database or insert data into the database.
+
+Each line of the CSV must confirm to the column specifications of the table you are inserting into. For example, if your MySQL statement would be "INSERT INTO table VALUES(XX,YY,ZZ)" then your CSV needs to be formatted as:
+
+XX,YY,ZZ
+XX2,YY2,ZZ2
+XX3,YY3,ZZ3
+etc.
+
+Where each line is a separate insert statement for the table.
+
+***February 24, 2012***
+
+Currently you can only perform a select query with only 1 "where" condition. More features to be added as more boring evenings occur :)
