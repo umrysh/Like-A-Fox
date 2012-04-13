@@ -123,6 +123,12 @@ class MysqlClient:
 					
 					print 'insert into %s values(%s)' % (self.table,temp)
 					self.cur.execute('insert into %s values(%s)' % (self.table,temp))
+				dialog = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,gtk.MESSAGE_INFO, gtk.BUTTONS_OK,"Insert Completed!")
+				dialog.set_title("Like A Fox :)")
+
+				dialog.run()
+				dialog.destroy()
+
 	def enter_callback(self,widget, entry):
 		temp=0;
 	def cb_select_menu_select(self,widget,data):
