@@ -13,7 +13,20 @@ Notes:
 
 Changelog:
 
-***Updated April 12 2012***
+***Updated April 16 2012***
+
+There is now a check box when inserting a CSV that allows you to specify whether the first row of the CSV contains the columns for your insert statement. For example, if your MySQL statement would be
+
+"INSERT INTO table (column3,column6,column8) VALUES(XX,YY,ZZ)"
+
+Then the first row of the CSV would have to be:
+
+column3,column6,column8
+
+Previous to this update you would have had to add NULL values in each row of your CSV to correspond to missing columns. As Like-A-Fox needed the rows to match the table exactly.
+
+
+***April 12 2012***
 
 You can now choose to have the results of your "Select" query exported to a comma separated file instead of being printed to the screen (This is a very quick way to export all the records from a table).
 

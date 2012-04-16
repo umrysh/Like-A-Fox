@@ -113,24 +113,45 @@ class MysqlClient:
 				Ofile = open(self.csvpath, 'r')
 				Reader = csv.reader(Ofile, delimiter=',', quotechar='"')
 
-				for row in Reader:
-					temp = ""
-					for count in range(0,len(row)):
-						if temp == "":
-							temp = '"%s"' % row[count]
+				### Check if first row contains the column list###
+				if self.firstRowHasColumns.get_active():
+					firstTime = True
+					for row in Reader:
+						if firstTime:
+							headings = ""
+							for count in range(0,len(row)):
+								if headings == "":
+									headings = '%s' % row[count]
+								else:
+									headings = headings + "," + '%s' % row[count]
+							firstTime = False
 						else:
-							temp = temp + "," + '"%s"' % row[count]
-					
-					print 'insert into %s values(%s)' % (self.table,temp)
-					self.cur.execute('insert into %s values(%s)' % (self.table,temp))
+							temp = ""
+							for count in range(0,len(row)):
+								if temp == "":
+									temp = '"%s"' % row[count]
+								else:
+									temp = temp + "," + '"%s"' % row[count]
+							
+							print 'insert into %s (%s) values(%s)' % (self.table,headings,temp)
+							self.cur.execute('insert into %s (%s) values(%s)' % (self.table,headings,temp))
+				else:
+					for row in Reader:
+						temp = ""
+						for count in range(0,len(row)):
+							if temp == "":
+								temp = '"%s"' % row[count]
+							else:
+								temp = temp + "," + '"%s"' % row[count]
+						
+						print 'insert into %s values(%s)' % (self.table,temp)
+						self.cur.execute('insert into %s values(%s)' % (self.table,temp))
+
 				dialog = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,gtk.MESSAGE_INFO, gtk.BUTTONS_OK,"Insert Completed!")
 				dialog.set_title("Like A Fox :)")
 
 				dialog.run()
 				dialog.destroy()
-
-	def enter_callback(self,widget, entry):
-		temp=0;
 	def cb_select_menu_select(self,widget,data):
 		self.selectcolumn = data
 	def cb_where_menu_select(self,widget,data):
@@ -229,7 +250,6 @@ class MysqlClient:
 
 			self.where3 = gtk.Entry()
 			self.where3.set_max_length(255)
-			self.where3.connect("activate", self.enter_callback, self.where3)
 			self.where3.set_text("")
 			self.where3.select_region(0, len(self.where3.get_text()))
 			self.QWhereHbox.pack_start(self.where3, True, True, 0)
@@ -244,6 +264,8 @@ class MysqlClient:
 			self.submithbox.show()
 
 	def cb_type_menu_select(self,widget,data):
+		if self.Qvbox:
+			self.Qvbox.destroy()
 		if data != "":
 			self.warning2.hide()
 			try:
@@ -256,7 +278,8 @@ class MysqlClient:
 			self.con.autocommit(True)
 			self.cur = self.con.cursor()
 			self.buttons_hbox.show()
-
+		else:
+			self.buttons_hbox.hide()
 	def select_print_query(self,widget):
 		self.export = False
 		self.select_query()
@@ -348,13 +371,16 @@ class MysqlClient:
 		self.QFromText.show()
 
 		self.QSelectHbox = gtk.HBox(False, 0)
+		self.QSelectHbox2 = gtk.HBox(False, 0)
 		
 	def cb_insert_menu_select(self,widget,data):
 		# Destroy rest of query
 		self.QSelectHbox.destroy()
+		self.QSelectHbox2.destroy()
 		if data != "":
 			self.table = data
 			self.QSelectHbox = gtk.HBox(False, 0)
+			self.QSelectHbox2 = gtk.HBox(False, 0)
 			button3 = gtk.Button("Select CSV File")
 			entryLOC = gtk.Entry()
 			entryLOC.set_text("")
@@ -366,9 +392,22 @@ class MysqlClient:
 			self.QSelectHbox.pack_start(entryLOC, True, True, 0)
 			self.QSelectHbox.pack_start(button3, False, False, 0)
 
+			columnLabel = gtk.Label("First Row of CSV Contains Column List: ")
+			columnLabel.set_alignment(0, 0.5)
+			columnLabel.show()
+
+			self.firstRowHasColumns = gtk.CheckButton()
+			self.firstRowHasColumns.set_active(True)
+			self.firstRowHasColumns.show()
+
+			self.QSelectHbox2.pack_end(self.firstRowHasColumns, False, False, 0)
+			self.QSelectHbox2.pack_end(columnLabel, False, False, 0)
+
 			self.Qvbox.pack_start(self.QSelectHbox, False, True, 0)
+			self.Qvbox.pack_start(self.QSelectHbox2, False, True, 0)
 
 			self.QSelectHbox.show()
+			self.QSelectHbox2.show()
 			self.submithbox.show()
 
 	def fileselect(self, widget, entryLOC):
@@ -558,7 +597,6 @@ class MysqlClient:
 	  
 		self.ipaddress = gtk.Entry()
 		self.ipaddress.set_max_length(15)
-		self.ipaddress.connect("activate", self.enter_callback, self.ipaddress)
 		self.ipaddress.set_text("127.0.0.1")
 		self.ipaddress.select_region(0, len(self.ipaddress.get_text()))
 		self.iphbox.pack_start(self.ipaddress, True, True, 0)
@@ -577,7 +615,6 @@ class MysqlClient:
 	  
 		self.username = gtk.Entry()
 		self.username.set_max_length(30)
-		self.username.connect("activate", self.enter_callback, self.username)
 		self.username.set_text("root")
 		self.username.select_region(0, len(self.username.get_text()))
 		self.userhbox.pack_start(self.username, True, True, 0)
@@ -591,7 +628,7 @@ class MysqlClient:
 	  
 		self.password = gtk.Entry()
 		self.password.set_max_length(30)
-		self.password.connect("activate", self.enter_callback, self.password)
+		self.password.connect("activate", self.selectdb)
 		self.password.set_text("******")
 		self.password.select_region(0, len(self.password.get_text()))
 		self.passhbox.pack_start(self.password, True, True, 0)
