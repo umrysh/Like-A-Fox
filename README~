@@ -1,6 +1,0 @@
-Current Version:
-*Currently you can only perform a select query with only 1 "where" condition. More features to be added soon :)
-
-
-Notes:
-Make sure your MySQL account has the correct permissions to access the databases remotely.
