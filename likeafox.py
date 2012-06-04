@@ -36,7 +36,17 @@ class MysqlClient:
 				print self.selectcolumn
 
 			if self.wherecolumn != "" and self.where2column != "" and self.where3.get_text() != "":
-				self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
+				multipleWheres = self.where3.get_text().split(',')
+				if len(multipleWheres) > 1:
+					whereString = " where "
+					for count in range(0,len(multipleWheres)):
+						if count == 0:
+							whereString= whereString + '%s %s "%s"' % (self.wherecolumn,self.where2column,multipleWheres[count])
+						else:
+							whereString= whereString + ' or %s %s "%s"' % (self.wherecolumn,self.where2column,multipleWheres[count])
+					self.cur.execute('select %s from %s %s' % (self.selectcolumn,self.table,whereString))
+				else:	
+					self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
 			else:
 				self.cur.execute('select %s from %s' % (self.selectcolumn,self.table))
 			numrows = int(self.cur.rowcount)
@@ -71,7 +81,17 @@ class MysqlClient:
 
 
 			if self.wherecolumn != "" and self.where2column != "" and self.where3.get_text() != "":
-				self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
+				multipleWheres = self.where3.get_text().split(',')
+				if len(multipleWheres) > 1:
+					whereString = " where "
+					for count in range(0,len(multipleWheres)):
+						if count == 0:
+							whereString= whereString + '%s %s "%s"' % (self.wherecolumn,self.where2column,multipleWheres[count])
+						else:
+							whereString= whereString + ' or %s %s "%s"' % (self.wherecolumn,self.where2column,multipleWheres[count])
+					self.cur.execute('select %s from %s %s' % (self.selectcolumn,self.table,whereString))
+				else:	
+					self.cur.execute('select %s from %s where %s %s "%s"' % (self.selectcolumn,self.table,self.wherecolumn,self.where2column,self.where3.get_text()))
 			else:
 				self.cur.execute('select %s from %s' % (self.selectcolumn,self.table))
 			numrows = int(self.cur.rowcount)
@@ -249,9 +269,9 @@ class MysqlClient:
 
 
 			self.where3 = gtk.Entry()
-			self.where3.set_max_length(255)
+			#self.where3.set_max_length(255)
 			self.where3.set_text("")
-			self.where3.select_region(0, len(self.where3.get_text()))
+			#self.where3.select_region(0, len(self.where3.get_text()))
 			self.QWhereHbox.pack_start(self.where3, True, True, 0)
 
 			self.Qvbox.pack_start(self.QWhereHbox, False, True, 0)

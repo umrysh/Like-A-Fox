@@ -13,6 +13,16 @@ Notes:
 
 Changelog:
 
+***Updated June 4 2012***
+
+When performing a select query you can now have multiple where statements using "or".
+
+For example: select column from table where column = A or column = B or .... or column = Z;
+
+Note: The value of "column" and the type of operator (Equals, Is Greater Than, ect.) in the where statements are the same.
+
+To accomplish this fill out the information as if you are performing a select statement with only one "where" clause except in the vary last text box (where you would enter the value for your where statement) enter a list of values separated by a comma (eg. 567,8910,111213).
+
 ***Updated April 16 2012***
 
 There is now a check box when inserting a CSV that allows you to specify whether the first row of the CSV contains the columns for your insert statement. For example, if your MySQL statement would be
