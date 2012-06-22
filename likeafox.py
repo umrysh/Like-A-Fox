@@ -139,7 +139,8 @@ class MysqlClient:
 					for row in Reader:
 						if firstTime:
 							headings = ""
-							for count in range(0,len(row)):
+							lengthOfHeadings = len(row)
+							for count in range(0,lengthOfHeadings):
 								if headings == "":
 									headings = '%s' % row[count]
 								else:
@@ -147,7 +148,7 @@ class MysqlClient:
 							firstTime = False
 						else:
 							temp = ""
-							for count in range(0,len(row)):
+							for count in range(0,lengthOfHeadings):
 								if temp == "":
 									temp = "'%s'" % row[count].replace("'", "\\'")
 								else:
