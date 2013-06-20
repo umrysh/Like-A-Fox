@@ -272,7 +272,6 @@ class MysqlClient:
 			self.where3 = gtk.Entry()
 			#self.where3.set_max_length(255)
 			self.where3.set_text("")
-			#self.where3.select_region(0, len(self.where3.get_text()))
 			self.QWhereHbox.pack_start(self.where3, True, True, 0)
 
 			self.Qvbox.pack_start(self.QWhereHbox, False, True, 0)
@@ -637,7 +636,6 @@ class MysqlClient:
 		self.username = gtk.Entry()
 		self.username.set_max_length(30)
 		self.username.set_text("root")
-		self.username.select_region(0, len(self.username.get_text()))
 		self.userhbox.pack_start(self.username, True, True, 0)
 		#
 		self.passhbox = gtk.HBox(False, 0)
@@ -651,7 +649,6 @@ class MysqlClient:
 		self.password.set_max_length(30)
 		self.password.connect("activate", self.selectdb)
 		self.password.set_text("******")
-		self.password.select_region(0, len(self.password.get_text()))
 		self.passhbox.pack_start(self.password, True, True, 0)
 		#
 		self.connecthbox = gtk.HBox(False, 0)
